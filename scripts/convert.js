@@ -336,13 +336,13 @@ function buildPostPage(title, dateDisplay, bodyHtml, imagePath) {
 <html lang="en">
 <head>
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-CJV8W4KR8X"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5K1627WRJ2"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
-  gtag('config', 'G-CJV8W4KR8X');
+  gtag('config', 'G-5K1627WRJ2');
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
