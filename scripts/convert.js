@@ -2,6 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const mammoth = require("mammoth");
 const AdmZip = require("adm-zip");
+const yaml = require("js-yaml");
+const { marked } = require("marked");
 
 const ROOT = path.join(__dirname, "..");
 const UPLOADS_DIR = path.join(ROOT, "uploads");
@@ -12,7 +14,7 @@ const POST_IMAGES_DIR = path.join(ROOT, "assets", "img", "posts");
 const SITE_URL = "https://blog.moldtraining.us";
 const LOGO_URL = SITE_URL + "/assets/img/pmmt-logo.png";
 
-const SUPPORTED_EXTENSIONS = [".docx", ".txt", ".zip"];
+const SUPPORTED_EXTENSIONS = [".docx", ".txt", ".zip", ".md"];
 const DOC_EXTENSIONS = [".docx", ".txt"];
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 
@@ -431,6 +433,117 @@ ${bodyHtml}
 }
 
 // ---------------------------------------------------------------------------
+// Markdown + YAML frontmatter conversion.
+//
+// Some posts arrive as a .md file with a frontmatter block (title, slug,
+// date, meta_description, internal_links, external_references, ...) and a
+// Markdown body, rather than a Word doc. This is parsed independently of
+// the paragraph-block pipeline above since Markdown already has real
+// structure that `marked` can render directly.
+// ---------------------------------------------------------------------------
+
+function splitFrontmatter(raw) {
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if (!match) return { data: {}, body: raw };
+  let data = {};
+  try {
+    data = yaml.load(match[1]) || {};
+  } catch (err) {
+    console.log("  [frontmatter] failed to parse YAML: " + err.message);
+  }
+  return { data: data, body: match[2] };
+}
+
+function normalizeLinkList(list) {
+  if (!Array.isArray(list)) return [];
+  return list.filter((u) => typeof u === "string" && u.trim()).map((u) => u.trim());
+}
+
+// Best-effort human label for a bare URL, e.g.
+// ".../mold-training-for-property-management/" -> "Mold Training For Property Management"
+function labelFromUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const segments = parsed.pathname.split("/").filter(Boolean);
+    const last = segments[segments.length - 1] || parsed.hostname;
+    const words = last.replace(/\.\w+$/, "").replace(/[-_]+/g, " ").trim();
+    if (!words) return parsed.hostname;
+    return words.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  } catch (err) {
+    return url;
+  }
+}
+
+function linksToSourceListHtml(heading, urls) {
+  if (!urls.length) return "";
+  return (
+    "\n<h2>" +
+    escapeHtml(heading) +
+    '</h2>\n<ul class="sources-list">' +
+    urls
+      .map(
+        (url) =>
+          '<li><a href="' +
+          escapeHtml(url) +
+          '" target="_blank" rel="noopener noreferrer">' +
+          escapeHtml(labelFromUrl(url)) +
+          "</a></li>"
+      )
+      .join("") +
+    "</ul>"
+  );
+}
+
+function normalizeDateIso(value) {
+  if (value) {
+    const s = String(value).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const parsed = new Date(s);
+    if (!isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+  }
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isoDateToDisplay(isoDate) {
+  return new Date(isoDate + "T00:00:00").toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function convertMarkdownFile(filePath, filename) {
+  const raw = fs.readFileSync(filePath, "utf8");
+  const { data, body } = splitFrontmatter(raw);
+
+  const title = plainNormalize(String(data.title || titleFromFilename(filename)));
+
+  // Drop a leading "# Title" line so it isn't duplicated - buildPostPage
+  // already renders the title in the page header above the article body.
+  const markdownBody = body.replace(/^\s*#[^\n]*\n+/, "");
+
+  let bodyHtml = marked.parse(markdownBody).trim();
+
+  const excerpt = data.meta_description
+    ? plainNormalize(String(data.meta_description)).slice(0, 160)
+    : excerptFromHtml(bodyHtml, 160);
+
+  bodyHtml += linksToSourceListHtml("Sources", normalizeLinkList(data.external_references));
+  bodyHtml += linksToSourceListHtml("Related Resources", normalizeLinkList(data.internal_links));
+
+  const dateIso = normalizeDateIso(data.date);
+
+  return {
+    title: title,
+    slugHint: data.slug ? slugify(String(data.slug)) : null,
+    dateIso: dateIso,
+    dateDisplay: isoDateToDisplay(dateIso),
+    excerpt: excerpt,
+    bodyHtml: bodyHtml,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Per-file conversion
 // ---------------------------------------------------------------------------
 
@@ -537,6 +650,31 @@ function main() {
       return chain.then(() => {
         const filePath = path.join(UPLOADS_DIR, filename);
         console.log("Converting " + filename + " ...");
+
+        if (path.extname(filename).toLowerCase() === ".md") {
+          const result = convertMarkdownFile(filePath, filename);
+
+          const baseSlug = result.slugHint || slugify(result.title);
+          const slug = uniqueSlug(baseSlug, existingSlugs);
+          existingSlugs.add(slug);
+
+          const pageHtml = buildPostPage(result.title, result.dateDisplay, result.bodyHtml, null);
+          fs.writeFileSync(path.join(POSTS_DIR, slug + ".html"), pageHtml);
+
+          posts.push({
+            title: result.title,
+            slug: slug,
+            image: null,
+            date: result.dateIso,
+            dateDisplay: result.dateDisplay,
+            excerpt: result.excerpt,
+          });
+
+          fs.renameSync(filePath, path.join(PROCESSED_DIR, filename));
+          console.log("  -> posts/" + slug + ".html");
+          return;
+        }
+
         return convertFile(filePath, filename).then(({ blocks, image }) => {
           const { title, rest } = extractTitle(blocks, titleFromFilename(filename));
           const bodyHtml = buildBodyHtml(rest);

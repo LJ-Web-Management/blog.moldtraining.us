@@ -1,4 +1,4 @@
-name: Convert Word Docs to Blog Posts
+name: Convert Uploaded Documents to Blog Posts
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
       - "uploads/*.docx"
       - "uploads/*.txt"
       - "uploads/*.zip"
+      - "uploads/*.md"
 
 permissions:
   contents: write
@@ -37,6 +38,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "Nothing to commit."
           else
-            git commit -m "Publish blog post(s) from uploaded Word document(s)"
+            git commit -m "Publish blog post(s) from uploaded document(s)"
             git push
           fi

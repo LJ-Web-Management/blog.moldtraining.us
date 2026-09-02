@@ -23,8 +23,28 @@ Add a file to the `uploads/` folder on the `main` branch (via the GitHub web UI'
 - **`.docx`** — a Word document. The first heading or line becomes the post title; the rest becomes the body.
 - **`.txt`** — plain text, same rule for the title.
 - **`.zip`** — a zip containing one `.docx`/`.txt` plus (optionally) one image file (`.jpg`/`.png`/`.webp`/`.gif`) to use as the post's featured image.
+- **`.md`** — Markdown with a YAML frontmatter block, e.g.:
 
-Pushing to `uploads/*.docx`, `uploads/*.txt`, or `uploads/*.zip` triggers the **Convert Word Docs to Blog Posts** GitHub Action, which:
+  ```markdown
+  ---
+  title: "How Property Managers Should Document Tenant Mold Complaints"
+  meta_description: "Used as the post's excerpt/search text if present."
+  slug: "tenant-mold-complaint-documentation-property-managers"
+  date: "2026-09-02"
+  internal_links:
+    - "https://www.moldtraining.us/mold-training-for-property-management/"
+  external_references:
+    - "https://www.epa.gov/mold/mold-course-introduction"
+  ---
+
+  # How Property Managers Should Document Tenant Mold Complaints
+
+  Body content in Markdown (headings, lists, bold, links, ...).
+  ```
+
+  Only `title` is required; everything else falls back sensibly (`slug` is derived from the title, `date` defaults to the day it's converted, `meta_description` falls back to the first paragraph). `external_references` and `internal_links` are appended as linked "Sources" / "Related Resources" lists at the end of the post.
+
+Pushing to `uploads/*.docx`, `uploads/*.txt`, `uploads/*.zip`, or `uploads/*.md` triggers the **Convert Uploaded Documents to Blog Posts** GitHub Action, which:
 
 1. Converts the document into `posts/<slug>.html` using the site's styling.
 2. Saves any featured image into `assets/img/posts/`.

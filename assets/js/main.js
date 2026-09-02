@@ -35,7 +35,7 @@ function renderPosts() {
 
   if (allPosts.length === 0) {
     container.innerHTML =
-      '<div class="empty-state">No blog posts yet. Upload a Word document to the <code>uploads</code> folder on GitHub to publish the first one.</div>';
+      '<div class="empty-state">No blog posts yet. Upload a document to the <code>uploads</code> folder on GitHub to publish the first one.</div>';
     pagination.innerHTML = "";
     return;
   }
