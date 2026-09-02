@@ -358,15 +358,33 @@ function buildPostPage(title, dateDisplay, bodyHtml, imagePath) {
 </head>
 <body>
 <header class="site-header">
-  <div class="header-inner">
-    <a class="brand" href="../index.html">
-      <img src="../assets/img/pmmt-logo.png" alt="moldtraining.us" width="34" height="34">
+  <div class="container header-inner">
+    <a href="https://moldtraining.us/" class="logo">
+      <img src="../assets/img/pmmt-logo.png" alt="moldtraining.us" class="logo-icon">
+      <span class="logo-text">moldtraining<span class="logo-dash">.us</span></span>
     </a>
-    <nav>
-      <a href="../index.html">Blog</a>
-      <a href="https://moldtraining.us">Main Site</a>
-      <a href="https://moldtraining.us/contact/">Contact Us</a>
+
+    <nav class="main-nav" id="mainNav">
+      <a href="https://moldtraining.us/#curriculum">Courses</a>
+      <a href="https://moldtraining.us/#certifications">Certifications</a>
+      <a href="https://moldtraining.us/frequently-asked-questions/">FAQ</a>
+      <a href="../index.html" class="is-current">Blog</a>
+      <a href="tel:18664296742" class="nav-phone">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        1-866-429-6742
+      </a>
     </nav>
+
+    <div class="header-actions">
+      <a href="tel:18664296742" class="header-phone">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        1-866-429-6742
+      </a>
+      <a href="https://moldtraining.us/#pricing" class="btn btn-primary btn-sm">Start Training</a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -406,6 +424,7 @@ ${bodyHtml}
     <div class="footer-bottom-inner">&copy; <span id="year">${new Date().getFullYear()}</span> Industrial Certified Training, LLC - All Rights Reserved</div>
   </div>
 </footer>
+<script src="../assets/js/nav.js"></script>
 </body>
 </html>
 `;
